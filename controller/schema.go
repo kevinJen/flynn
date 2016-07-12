@@ -384,6 +384,27 @@ $$ LANGUAGE plpgsql`,
 	migrations.Add(18,
 		`INSERT INTO event_types (name) VALUES ('app_garbage_collection')`,
 	)
+	migrations.Add(19,
+		`DROP TRIGGER release_artifacts_trigger ON release_artifacts`,
+		`DROP FUNCTION check_release_artifacts()`,
+		`CREATE FUNCTION check_release_artifacts() RETURNS OPAQUE AS $$
+			BEGIN
+			    IF (
+			      SELECT COUNT(*)
+			      FROM release_artifacts r
+			      INNER JOIN artifacts a ON r.artifact_id = a.artifact_id
+			      WHERE r.release_id = NEW.release_id AND a.type = 'flynn'
+			    ) != 1 THEN
+			      RAISE EXCEPTION 'must have exactly one artifact of type "flynn"' USING ERRCODE = 'check_violation';
+			    END IF;
+
+			    RETURN NULL;
+			END;
+			$$ LANGUAGE plpgsql`,
+		`CREATE TRIGGER release_artifacts_trigger
+			AFTER INSERT ON release_artifacts
+			FOR EACH ROW EXECUTE PROCEDURE check_release_artifacts()`,
+	)
 }
 
 func migrateDB(db *postgres.DB) error {

@@ -178,6 +178,7 @@ install_packages() {
     "ubuntu-zfs"
     "vim-tiny"
     "libsasl2-dev"
+    "squashfs-tools"
   )
 
   apt-get install -y ${packages[@]}

@@ -81,6 +81,9 @@ func (b *Builder) CreateImage(ids []string, parent *image.Image) (*image.Image, 
 		return nil, err
 	}
 	defer os.RemoveAll(dir)
+	if err := os.Chmod(dir, 0755); err != nil {
+		return nil, err
+	}
 
 	for i, id := range ids {
 		parent := ""
